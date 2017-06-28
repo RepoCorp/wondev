@@ -216,8 +216,151 @@ define(['main'], function (main) {
   //
   // })
 
-  describe('calculateCellValue', function() {
-    xit('2', function() {
+  // describe('calculateCellValue', function() {
+  //   xit('2', function() {
+  //     var board = [
+  //       '01000',
+  //       '00000',
+  //       '00000',
+  //       '00000',
+  //       '00000'
+  //     ]
+  //
+  //     var position = [1,1]
+  //
+  //     var result = main.calculateCellValue(board, position, 1);
+  //     var expected = valuesWeights['01']+7
+  //     expect(result).toEqual(expected);
+  //   })
+  //
+  //   xit('3', function() {
+  //     var board = [
+  //       '11100',
+  //       '10100',
+  //       '11100',
+  //       '00000',
+  //       '00000'
+  //     ]
+  //
+  //     var position = [1,1]
+  //
+  //     var result = main.calculateCellValue(board, position, 1);
+  //     var expected = valuesWeights['01']*8
+  //     expect(result).toEqual(expected);
+  //   })
+  //
+  //   xit('4', function() {
+  //     var board = [
+  //       '11100',
+  //       '11100',
+  //       '11100',
+  //       '00000',
+  //       '00000'
+  //     ]
+  //
+  //     var position = [0,0]
+  //
+  //     var result = main.calculateCellValue(board, position, 1);
+  //     var expected = valuesWeights['11']*3
+  //     expect(result).toEqual(expected);
+  //   })
+  //
+  //   xit('5', function() {
+  //     var board = [
+  //       '1.100',
+  //       '11100',
+  //       '11100',
+  //       '00000',
+  //       '00000'
+  //     ]
+  //
+  //     var position = [0,0]
+  //
+  //     var result = main.calculateCellValue(board, position, 1);
+  //     var expected = valuesWeights['11']*2
+  //     expect(result).toEqual(expected);
+  //   })
+  //
+  //   xit('6', function() {
+  //     var board = [
+  //       '1.100',
+  //       '41100',
+  //       '11100',
+  //       '00000',
+  //       '00000'
+  //     ]
+  //
+  //     var position = [0,0]
+  //
+  //     var result = main.calculateCellValue(board, position, 1);
+  //     var expected = valuesWeights['11']
+  //     expect(result).toEqual(expected);
+  //   })
+  //
+  //   xit('7', function() {
+  //     var board = [
+  //       '33300',
+  //       '32300',
+  //       '33300',
+  //       '00000',
+  //       '00000'
+  //     ]
+  //
+  //     var position = [1,1]
+  //
+  //     var result = main.calculateCellValue(board, position, 1);
+  //     var expected = valuesWeights['23']*8
+  //     expect(result).toEqual(expected);
+  //   })
+  //
+  //   xit('8', function() {
+  //     var board = [
+  //       '33300',
+  //       '33300',
+  //       '33300',
+  //       '00000',
+  //       '00000'
+  //     ]
+  //
+  //     var position = [1,1]
+  //
+  //     var result = main.calculateCellValue(board, position, 1);
+  //     var expected = valuesWeights['33']*8
+  //     expect(result).toEqual(expected);
+  //   })
+  //
+  //   xit('9', function() {
+  //     var board = [
+  //       '00000',
+  //       '01002',
+  //       '01001',
+  //       '01100',
+  //       '00000'
+  //     ]
+  //
+  //     var position = [3,3]
+  //     var depth = 3
+  //
+  //     var maxValue = 0;
+  //     var maxCell = 0;
+  //
+  //     for (var x=0; x<5; x++) {
+  //       for (var y=0; y<5; y++) {
+  //         var value = main.calculateCellValue(board, [x,y], depth, 0, false, [])
+  //         if (value > maxValue) {
+  //           maxValue = value;
+  //           maxCell = [x,y]
+  //         }
+  //       }
+  //     }
+  //
+  //     expect([maxCell, maxValue]).toEqual(4);
+  //   })
+  //
+  // })
+
+  describe('getBestAction', function() {
+    it('1', function() {
       var board = [
         '01000',
         '00000',
@@ -226,124 +369,12 @@ define(['main'], function (main) {
         '00000'
       ]
 
-      var position = [1,1]
+      var units = [[0,0]]
+      var oponentUnits = [[1,1]]
+      var legalActions = ['PUSH$MOVE 0 SE NE', 'PUSH$MOVE 0 NE NE']
 
-      var result = main.calculateCellValue(board, position, 1);
-      var expected = valuesWeights['01']+7
-      expect(result).toEqual(expected);
-    })
-
-    xit('3', function() {
-      var board = [
-        '11100',
-        '10100',
-        '11100',
-        '00000',
-        '00000'
-      ]
-
-      var position = [1,1]
-
-      var result = main.calculateCellValue(board, position, 1);
-      var expected = valuesWeights['01']*8
-      expect(result).toEqual(expected);
-    })
-
-    xit('4', function() {
-      var board = [
-        '11100',
-        '11100',
-        '11100',
-        '00000',
-        '00000'
-      ]
-
-      var position = [0,0]
-
-      var result = main.calculateCellValue(board, position, 1);
-      var expected = valuesWeights['11']*3
-      expect(result).toEqual(expected);
-    })
-
-    xit('5', function() {
-      var board = [
-        '1.100',
-        '11100',
-        '11100',
-        '00000',
-        '00000'
-      ]
-
-      var position = [0,0]
-
-      var result = main.calculateCellValue(board, position, 1);
-      var expected = valuesWeights['11']*2
-      expect(result).toEqual(expected);
-    })
-
-    xit('6', function() {
-      var board = [
-        '1.100',
-        '41100',
-        '11100',
-        '00000',
-        '00000'
-      ]
-
-      var position = [0,0]
-
-      var result = main.calculateCellValue(board, position, 1);
-      var expected = valuesWeights['11']
-      expect(result).toEqual(expected);
-    })
-
-    xit('7', function() {
-      var board = [
-        '33300',
-        '32300',
-        '33300',
-        '00000',
-        '00000'
-      ]
-
-      var position = [1,1]
-
-      var result = main.calculateCellValue(board, position, 1);
-      var expected = valuesWeights['23']*8
-      expect(result).toEqual(expected);
-    })
-
-    xit('8', function() {
-      var board = [
-        '33300',
-        '33300',
-        '33300',
-        '00000',
-        '00000'
-      ]
-
-      var position = [1,1]
-
-      var result = main.calculateCellValue(board, position, 1);
-      var expected = valuesWeights['33']*8
-      expect(result).toEqual(expected);
-    })
-
-    it('9', function() {
-      var board = [
-        '12320',
-        '02000',
-        '00100',
-        '00000',
-        '00000'
-      ]
-
-      var position = [1,1]
-      var depth = 3
-
-      var result = main.calculateCellValue(board, position, depth, 0, []);
-      var expected = 3
-      expect(result).toEqual(expected);
+      var bestAction = main.getBestAction(board, units, oponentUnits, legalActions)
+      expect(bestAction).toEqual('PUSH$MOVE 0 SE NE');
     })
 
   })
