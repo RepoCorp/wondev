@@ -1,274 +1,193 @@
-define([], function () {
-
-
-  /**
-   * Auto-generated code below aims at helping you parse
-   * the standard input according to the problem statement.
-   **/
-
-  var size = parseInt(readline());
-  var unitsPerPlayer = parseInt(readline());
-  var depthConfig = 2;
+// define(["lodash"], function (_) {
 
   var valuesWeights = {
     reachThree: 20,
     builtFourth: -1,
-    up: 0.1,
-    down: 0.1,
-    stay: 0.1,
+    up: 0.4,
+    down: 0.4,
+    stay: 0.4,
     0: 1,
-    1: 0.9,
-    2: 0.8,
-    3: 0.7
+    1: 0.6,
+    2: 0.4,
+    3: 0.3
   };
 
+  var depthConfig = 2;
 
-// game loop
-  function mainAppyyy() {
-    while (true) {
-      var board = [];
-      var myUnits = [];
-      var herUnits = [];
-      var actions = [];
-      var unitActions = [];
-      var actionMax = [];
-
-      for (var i = 0; i < size; i++) {
-        var row = readline();
-        board.push(row);
-        //printErr(row);
-      }
-      for (var i = 0; i < unitsPerPlayer; i++) {
-        var inputs = readline().split(' ');
-        var unit = [parseInt(inputs[0]), parseInt(inputs[1])]
-        myUnits.push(unit);
-        unitActions.push([]);
-        actionMax.push(0);
-      }
-      for (var i = 0; i < unitsPerPlayer; i++) {
-        var inputs = readline().split(' ');
-        var unit = [parseInt(inputs[0]), parseInt(inputs[1])]
-        herUnits.push(unit);
-        printErr(inputs);
-      }
-
-      var legalActions = parseInt(readline());
-      for (var i = 0; i < legalActions; i++) {
-        var action = [];
-        var inputs = readline().split(' ');
-        action.push(inputs[0]);
-        action.push(parseInt(inputs[1]));
-        action.push(inputs[2]);
-        action.push(inputs[3]);
-      }
-
-      var action = getBestAction(board, myUnits, herUnits, legalActions);
-      print(action);
-
-    }
+  function Game(board, playerUnits, oponentUnits) {
+    var self = this;
+    self.board = [];
+    board.forEach(function(row) {
+      self.board.push(row.slice());
+    });
+    self.playerUnits = [];
+    playerUnits.forEach(function(unit) {
+      self.playerUnits.push(unit.slice());
+    })
+    self.oponentUnits = [];
+    oponentUnits.forEach(function(unit) {
+      self.oponentUnits.push(unit.slice());
+    })
   }
 
-  function getBestAction(board, units, oponentUnits, legalActions) {
+  Game.prototype.simulateMove = function(move) {
+    if (move.action == 'PUSH&BUILD') {
+      this.simulateMovePush(move);
+    } else if (move.action == 'MOVE&BUILD') {
+      this.simulateMoveMove(move);
+    }
+  };
 
+  Game.prototype.simulateMovePush = function (move) {
+    var oponentPosition = calculateMove(move.move1, this.playerUnits[move.unit]);
+    var newOponentPosition = calculateMove(move.move2, oponentPosition);
+    var oponentIndex = getUnitInPosition(this.oponentUnits, oponentPosition);
+    this.oponentUnits[oponentIndex] = newOponentPosition;
+    this.board[oponentPosition[1]][oponentPosition[0]] += 1;
+    this.lastMovePosition = this.playerUnits[move.unit];
+  };
+
+  function getUnitInPosition(units, position) {
+    return units.findIndex(function(unit) {
+      return unit[0] == position[0] && unit[1] == position[1];
+    })
+  }
+
+  Game.prototype.simulateMoveMove = function (move) {
+    var newPosition = calculateMove(move.move1, this.playerUnits[move.unit]);
+    this.playerUnits[move.unit] = newPosition;
+    var blockPosition = calculateMove(move.move2, newPosition);
+    this.board[blockPosition[1]][blockPosition[0]] += 1;
+    this.lastMovePosition = newPosition;
+  };
+
+var size = parseInt(readline());
+var unitsPerPlayer = parseInt(readline());
+
+while (true) {
+  var board = [];
+  var myUnits = [];
+  var herUnits = [];
+  var actions = [];
+  var i;
+  var inputs;
+
+  for (i = 0; i < size; i++) {
+    var row = readline().split('');
+    row = row.map(function(element) {
+      if (element != '.')
+        return parseInt(element);
+      else
+        return element;
+
+    });
+    board.push(row);
+    printErr(row);
+  }
+
+  var unit;
+  for (i = 0; i < unitsPerPlayer; i++) {
+    inputs = readline().split(' ');
+    unit = [parseInt(inputs[0]), parseInt(inputs[1])]
+    myUnits.push(unit);
+  }
+  for (i = 0; i < unitsPerPlayer; i++) {
+    inputs = readline().split(' ');
+    unit = [parseInt(inputs[0]), parseInt(inputs[1])]
+    herUnits.push(unit);
+  }
+
+  var legalActions = parseInt(readline());
+  var action = {};
+  for (i = 0; i < legalActions; i++) {
+    action = {};
+    inputs = readline();
+    action.string = inputs;
+    inputs = inputs.split(' ');
+    action.action = inputs[0];
+    action.unit = parseInt(inputs[1]);
+    action.move1 = inputs[2];
+    action.move2 = inputs[3];
+    actions.push(action);
+  }
+
+  var gameBoard = new Game(board, myUnits, herUnits);
+  action = gameBoard.getBestAction(actions);
+  print(action);
+
+}
+
+  function calculateMove(movDir, current) {
+    var x = current[0];
+    var y = current[1];
+
+    if (movDir.includes('N'))
+      y -= 1;
+    if (movDir.includes('S'))
+      y += 1;
+    if (movDir.includes('E'))
+      x += 1;
+    if (movDir.includes('W'))
+      x -= 1;
+
+    return [x,y];
+  }
+
+  Game.prototype.getBestAction = function (legalActions) {
     var bestAction;
     var bestValue = 0;
 
-    for (var i=0; i<legalActions.length; i++) {
-      var actionValue = getActionValue(board, units, oponentUnits, legalActions[i]);
+    legalActions.forEach(function(action) {
+      var actionValue = this.getActionValue(action);
       if (actionValue > bestValue) {
         bestValue = actionValue;
         bestAction = legalActions[i]
       }
-    }
+    });
+    return bestAction;
+  };
 
+  Game.prototype.calculateHeight = function(position) {
+    return this.board[position[1]][position[0]]
   }
 
-  function getActionValue(board, units, oponentUnits, action) {
-    var unit = units[action[1]];
-    var oponentInitalValue = calculateOponentAvgValue(board, units, oponentUnits);
-    var unitInitialValue = calculateCellValue(board, unit, depthConfig, 0, false, [], oponentUnits)
-
-    var pushed = (action[0] == 'PUSH&BUILD');
-    var simulation = simulateMove(board, action, unit);
-
-    var simulatedUnits = units.clone()
-    simulatedUnits[action[1]] = simulation.newPosition;
-
-    var moveValue = 0;
-
-    if (calculateHeight(board, simulation.newPosition) == 3) {
-      moveValue = 20;
-    }
-    var oponentMoves = getOponentMoves(simulation.newBoard, oponentUnits, simulatedUnits);
-
-    var minValue = 'x';
-
-    if (oponentMoves.length == 0) {
-      minValue = calculateCellValue(simulation.newBoard, simulation.newPosition, depthConfig, 0, pushed, [])
-    }
-
-    for(var i=0; i<oponentMoves.lenght; i++) {
-      var updatedBoard = addBlockToBoard(board, oponentMoves.blockPosition);
-      var cellValue = calculateCellValue(updatedBoard, simulation.newPosition, depthConfig, 0, pushed, [])
-      if (minValue == 'x' || minValue > cellValue) {
-        minValue = cellValue;
-      }
-    }
-
-    return moveValue + minValue;
-  }
-
-  function getOponentMoves(board, oponentUnits, units) {
-    var possibleMoves = [];
-
-    for (var i = 0; i < oponentUnits; i++) {
-      var unit = oponentUnits[i];
-      var unitHeight = calculateHeight(board, unit);
-
-      if (unit[0] != -1) {
-        var surroundings = getSurroundings(board, unit);
-        for (var j = 0; j < surroundings.length; j++) {
-          if (unitInCell(units, surroundings[j].point)) {  // y si hay otro oponente en esa celda?
-          } else {
-            if (Math.abs(surroundings[j].value - unitHeight) < 2) {
-              var updatedOponentUnits = getUpdatedUnits(oponentUnits, oponentPosition, i);
-              var oponentPosition = surroundings[j].point;
-              var blockOptions = getSurroundings(board, oponentPosition)
-              for (var n = 0; n < blockOptions.lenght; n++) {
-                if (!unitInCell(units + oponentUnits, blockOptions[n])) {
-                  possibleMoves.push({oponentUnits: updatedOponentUnits, blockPosition: blockOptions[n], units: units})
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return possibleMoves;
-  }
-
-  function getUpdatedUnits(units, changedUnit, index) {
-    var copyUnits = units.clone();
-    copyUnits[index] = changedUnit;
-    return copyUnits
-  }
-
-  function calculateOponentAvgValue(board, units, oponentUnits) {
-    var oponentsValue = 0
-    var oponentsCount = 0;
-
-    for (var i = 0; i < oponentUnits; i++) {
-      var unit = oponentUnits[i];
-      if (unit[0] != -1) {
-        oponentsCount += 1;
-        oponentsValue += calculateCellValue(board, unit, depthConfig, 0, false, [], units)
-      }
-    }
-
-    if (oponentsCount) {
-      oponentsValue = oponentsValue / oponentsCount;
-    }
-
-    return oponentsValue
-  }
-
-  function calculateMove(movDir, current) {
-    var position = oneMove(movDir[0], current[0], current[1]);
-    if (movDir.length > 1) {
-      position = oneMove(movDir[1], position[0], position[1])
-    }
-    return position;
-  }
-
-  function oponentInCell(cell, herUnits) {
-    //for (var i=0; i<unitsPerPlayer; i++) {
-    //    if (herUnits[i][0] == cell[0] && herUnits[i][1] == cell[1]) {
-    //        return false;
-    //   }
-    //    }
-    return false;
-  }
-
-  function oneMove(movDir, x, y) {
-    switch (movDir) {
-      case 'N':
-        y -= 1;
-        break;
-      case 'S':
-        y += 1;
-        break;
-      case 'E':
-        x += 1;
-        break;
-      case 'W':
-        x -= 1;
-        break;
-    }
-    return [x, y];
-  }
-
-  function simulateMove(board, move, position) {
-
-    if (move[0] == 'MOVE&BUILD') {
-      var newPosition = calculateMove(move[2], position);
-      var blockPosition = calculateMove(move[3], newPosition);
-    } else {
-      var newPosition = position;
-      var oponentPosition = calculateMove(move[2], position);
-      blockPosition = calculateMove(move[3], oponentPosition);
-    }
-
-    var boardUpdated = addBlockToBoard(board, blockPosition)
-
-    return {newBoard: boardUpdated, newPosition: newPosition, blockPosition: blockPosition}
-  }
-
-  function addBlockToBoard(board, blockPosition) {
-    var boardCopy = board.slice();
-    var value = boardCopy[blockPosition[1]][blockPosition[0]]
-    value = parseInt(value) + 1;
-    var boardRow = boardCopy[blockPosition[1]];
-    boardRow = boardRow.substr(0,blockPosition[0]) + value.toString() + boardRow.substr(blockPosition[0] + 1)
-    boardCopy[blockPosition[1]] = boardRow;
-    return boardCopy;
-  }
-
-  function calculateCellValue(board, cell, depth, stepNum, pushed, memoized,herUnits) {
-    if (stepNum == depth) {
-      return 0;
-    }
-
-    if (oponentInCell(cell, herUnits)) {
-      return 0;
-    }
-
-
+  function checkMemoized(memoized, cell, stepNum) {
     var memoSaved = memoized.find(function(memo) {
       return memo.cell[0] == cell[0] && memo.cell[1] == cell[1];
     });
 
     if (memoSaved) {
       if (stepNum > memoSaved.step) {
-        return 0;
+        return {value: 0};
       } else {
         var diff = memoSaved.rawValue * (valuesWeights[stepNum] - valuesWeights[memoSaved.step]);
         memoSaved.step = stepNum;
-        return diff
+        return {value: diff};
       }
+    } else {
+      return 0;
+    }
+  }
+
+  Game.prototype.calculateCellValue = function (cell, depth, stepNum, memoized) {
+    if (stepNum == depth) {
+      return 0;
     }
 
-    var cells = getSurroundings(board, cell);
-    var cellHeight = calculateHeight(board, cell);
+    var isMemoized = checkMemoized(memoized, cell, stepNum);
+    if (isMemoized) {
+      return isMemoized.value;
+    }
+
+    var cells = this.getSurroundings(cell);
+    var cellHeight = this.calculateHeight(cell);
     var cellValue = cellHeight * 2;
 
-    if (cellHeight == 3) {
-      cellValue += valuesWeights['reachThree'];
-    }
-
     for (var i=0; i<cells.length; i++) {
-      if (Math.abs(cells[i].value - cellHeight) < 2) {
+      var surrCellValue = this.calculateHeight(cells[i]);
+      if (Math.abs(surrCellValue - cellHeight) < 2) {
         var pairValue = 0;
-        switch (cells[i].value - cellHeight) {
+        switch (surrCellValue - cellHeight) {
           case 0:
             pairValue = valuesWeights['stay'];
             break;
@@ -279,45 +198,65 @@ define([], function () {
             pairValue = valuesWeights['down'];
             break;
         }
-
         cellValue += pairValue;
+        if (surrCellValue == 3) {
+          cellValue += 2;
+        }
       }
     }
+
     memoized.push({cell: cell, step: stepNum, rawValue: cellValue});
 
     var surroundingCellsValue = 0;
     for (var i=0; i<cells.length; i++) {
-      if (Math.abs(cells[i].value - cellHeight) < 2) {
-        surroundingCellsValue += calculateCellValue(board, cells[i].point, depth, stepNum + 1, false, memoized, herUnits)
+      var surrCellValue = this.calculateHeight(cells[i]);
+      if (Math.abs(surrCellValue - cellHeight) < 2) {
+        surroundingCellsValue += this.calculateCellValue(cells[i], depth, stepNum + 1, memoized)
       }
-    }
-
-    if (cellHeight == 3 && pushed) {
-      cellValue -= valuesWeights['reachThree'];
-    }
-
-    if (pushed) {
-      cellValue += 5
     }
 
     var weightedCellValue = cellValue * valuesWeights[stepNum];
     return weightedCellValue + surroundingCellsValue;
   }
 
-  function calculateHeight(board, position) {
-    return parseInt(board[position[1]][position[0]])
-  }
+  Game.prototype.calculateStateValue = function() {
+    var stateValue = 0;
+    var unitsDispersionValue = this.getUnitsDispersionValue();
 
-  function getSurroundings(board, unit) {
+    var self = this;
+    this.playerUnits.forEach(function(playerCell) {
+        stateValue += self.calculateCellValue(playerCell, depthConfig, 0, []);
+    })
+
+    return stateValue + unitsDispersionValue;
+  };
+
+  Game.prototype.getUnitsDispersionValue = function () {
+    var totalDistance = 0;
+
+    var self = this;
+    this.playerUnits.forEach(function(playerCell) {
+      self.playerUnits.forEach(function (otherCell) {
+        totalDistance += Math.abs(playerCell[0] - otherCell[0]);
+        totalDistance += Math.abs(playerCell[1] - otherCell[1]);
+      })
+    })
+
+    var mainDistance = (totalDistance / this.playerUnits.length);
+
+    return mainDistance * -4;
+  };
+
+  Game.prototype.getSurroundings = function (unit) {
     var cells = [];
     for (var y=-1; y<2; y++) {
-      if ((unit[1] + y) >=0 && (unit[1] + y) < board.length) {
+      if ((unit[1] + y) >=0 && (unit[1] + y) < this.board.length) {
         for (var x=-1; x<2; x++) {
-          if ((unit[0] + x) >=0 && (unit[0] + x) < board.length) {
+          if ((unit[0] + x) >=0 && (unit[0] + x) < this.board.length) {
             if(!(x===0 && y===0)) {
-              var cellValue = board[y+unit[1]][x+unit[0]];
+              var cellValue = this.board[y+unit[1]][x+unit[0]];
               if (!(cellValue=='.') && !(cellValue==4)) {
-                cells.push({point: [unit[0]+ x, unit[1] + y], value: parseInt(cellValue)});
+                cells.push([unit[0]+ x, unit[1] + y]);
               }
             }
           }
@@ -328,27 +267,107 @@ define([], function () {
     return cells;
   }
 
-  function printBoard(board) {
-    for(var i=0; i<board.length; i++) {
-      printErr(board[i])
+  Game.prototype.getLastMoveValue = function() {
+    if (this.calculateHeight(this.lastMovePosition) == 3) {
+      return 20;
+    } else {
+      return 0;
     }
+  };
+
+  function getActionValue(action) {
+
+    var simulation = new Game(this.board, this.playerUnits, this.oponentUnits);
+    simulation.simulateMove(action);
+
+    var moveValue = simulation.getLastMoveValue();
+
+    var worstValue = simulation.calculateOponentMovesResult();
+
+    var cellValue;
+
+    if (worstValue ==  99999999) {
+      cellValue = simulation.calculateStateValue(depthConfig, 0, []);
+    } else {
+      cellValue = worstValue;
+    }
+    return moveValue + cellValue;
+  }
+
+  Game.prototype.calculateOponentMovesResult = function() {
+    var worstActionValue = 99999999;
+    var tempActionValue;
+
+    var theGame = this;
+    this.oponentUnits.forEach(function(oponentUnit, unitIndex) {
+      if (oponentUnit[0] != -1) {
+        var unitHeight = theGame.calculateHeight(oponentUnit);
+        var surroundings = theGame.getSurroundings(oponentUnit);
+        surroundings.forEach(function(surroundingCell) {
+          var myUnitIndex = getUnitInPosition(theGame.playerUnits, surroundingCell);
+          if (myUnitIndex != -1) {
+            tempActionValue = theGame.getPushActionsWorstValue(oponentUnit, surroundingCell, myUnitIndex);
+            if (tempActionValue < worstActionValue) {
+              worstActionValue = tempActionValue;
+            }
+          } else if (getUnitInPosition(theGame.oponentUnits, surroundingCell) != -1) {
+            // nothing
+          } else {
+            var cellHeight = theGame.calculateHeight(surroundingCell);
+            if (Math.abs(cellHeight - unitHeight) < 2) {
+              var blockOptions = this.getSurroundings(surroundingCell);
+              blockOptions.forEach(function(blockCell) {
+                if (getUnitInPosition(theGame.playerUnits.concat(theGame.oponentUnits), blockCell) == -1) {
+                  var tempGame = new Game(theGame.board, theGame.playerUnits, theGame.oponentUnits);
+                  tempGame.oponentUnits[unitIndex] = surroundingCell;
+                  tempGame.board[blockCell[1]][blockCell[0]] += 1;
+                  tempActionValue = tempGame.calculateStateValue();
+                  if (tempActionValue < worstActionValue) {
+                    worstActionValue = tempActionValue;
+                  }
+                }
+              })
+            }
+
+          }
+        })
+      }
+    });
+
+    return worstActionValue;
+
+  }
+
+  Game.prototype.getPushActionsWorstValue = function(oponentUnit, myUnit, myUnitIndex) {
+    var worstActionValue = 99999999;
+    var tempActionValue;
+
+    var myUnitHeight = this.calculateHeight(myUnit);
+    var mySurroundings = this.getSurroundings(myUnit);
+    var theGame = this;
+    mySurroundings.forEach(function (surroundingCell) {
+      var cellHeight = theGame.calculateHeight(surroundingCell);
+      if (Math.abs(cellHeight - myUnitHeight) < 2) {
+        if (getUnitInPosition(theGame.playerUnits.concat(theGame.oponentUnits), surroundingCell) == -1) {
+          var tempGame = new Game(theGame.board, theGame.playerUnits, theGame.oponentUnits);
+          tempGame.playerUnits[myUnitIndex] = surroundingCell;
+          tempGame.board[myUnit[1]][myUnit[0]] += 1;
+          tempActionValue = tempGame.calculateStateValue();
+          if (tempActionValue < worstActionValue) {
+            worstActionValue = tempActionValue;
+          }
+        }
+      }
+    })
+    return worstActionValue;
+
   }
 
 
-
-
-
-
-
-
-  return {
-    version: _.VERSION,
-    getBestAction: getBestAction
-  };
-});
-
-
-
-
-
-
+//   return {
+//     version: _.VERSION,
+//     calculateMove: calculateMove,
+//     getUnitInPosition: getUnitInPosition,
+//     game: Game
+//   };
+// });
